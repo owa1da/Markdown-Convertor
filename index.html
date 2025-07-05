@@ -139,17 +139,18 @@
         let htmlContent = marked.parse(markdownText);
 
         // Force table styles to ensure borders appear correctly
+        // Use the 'border' attribute for better compatibility with Google Docs
         htmlContent = htmlContent.replace(
           /<table>/g,
-          "<table style='width:100%;border-collapse:collapse;border:1px solid black;'>"
+          '<table border="1" style="width:100%;border-collapse:collapse;">'
         );
         htmlContent = htmlContent.replace(
-          /<th>/g,
-          "<th style='border:1px solid black;padding:8px;text-align:left;background:#f1f1f1;'>"
+          /<th[^>]*>/g,
+          '<th style="padding:8px;text-align:left;background:#f1f1f1;">'
         );
         htmlContent = htmlContent.replace(
-          /<td>/g,
-          "<td style='border:1px solid black;padding:8px;text-align:left;'>"
+          /<td[^>]*>/g,
+          '<td style="padding:8px;text-align:left;">'
         );
 
         // Ensure the preview section displays the modified HTML
