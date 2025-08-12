@@ -29,14 +29,11 @@
       button:hover:not(:disabled) { background: #0056b3; transform: translateY(-1px); }
       .button-success { background: #28a745 !important; transform: scale(1.02); }
       #preview {
-        border: 1px solid #ddd; padding: 1rem; border-radius: 5px; background: #fafafa; min-height: 150px; margin-top: 1rem; overflow: auto;
+        border: 1px solid #ddd; padding: 1rem; border-radius: 5px; background: transparent; min-height: 150px; margin-top: 1rem; overflow: auto;
       }
       .instruction { font-size: 14px; text-align: center; color: #666; margin-top: 1rem; }
       table { width: 100%; border-collapse: collapse; border: 1px solid #000; }
       th, td { border: 1px solid #000; padding: 8px; text-align: left; }
-      pre { background: #f4f4f4; border: 1px solid #ccc; padding: 10px; margin: 10px 0; font-family: 'Courier New', monospace; white-space: pre-wrap; overflow: auto; border-radius: 4px; }
-      code { background: #f4f4f4; padding: 2px 4px; font-family: 'Courier New', monospace; border-radius: 3px; }
-      pre code { background: transparent; padding: 0; }
     </style>
   </head>
   <body>
@@ -64,11 +61,10 @@
         const markdownText = markdownInput.value;
         const rawHtml = marked.parse(markdownText, { breaks: true });
 
-        // Work with a DOM instead of regex to avoid stray tags/empty blocks.
         const tmp = document.createElement("div");
         tmp.innerHTML = rawHtml;
 
-        // Tables
+        // Style tables
         tmp.querySelectorAll("table").forEach(t => {
           t.style.width = "100%";
           t.style.borderCollapse = "collapse";
@@ -86,32 +82,33 @@
           td.style.border = "1px solid #000";
         });
 
-        // Block code: replace <pre><code>…</code></pre> with a single styled <div><code>…</code></div>
+        // Block code: remove background, keep border
         tmp.querySelectorAll("pre > code").forEach(codeEl => {
           const pre = codeEl.parentElement;
           const wrapper = document.createElement("div");
-          wrapper.setAttribute("dir", "auto"); // good for Arabic/RTL snippets
+          wrapper.setAttribute("dir", "auto");
           wrapper.style.cssText =
-            "background-color:#f4f4f4;border:1px solid #cccccc;padding:12px;margin:12px 0;" +
+            "border:1px solid #cccccc;padding:12px;margin:12px 0;" +
             "font-family:'Courier New',Consolas,monospace;font-size:12px;line-height:1.4;" +
-            "white-space:pre-wrap;overflow-x:auto;border-radius:4px;";
+            "white-space:pre-wrap;overflow-x:auto;border-radius:4px;background:transparent;";
 
           const newCode = document.createElement("code");
           newCode.style.cssText = "background:transparent;padding:0;font-family:inherit;font-size:inherit;white-space:pre-wrap;";
-          newCode.textContent = codeEl.textContent; // preserve literal text
+          newCode.textContent = codeEl.textContent;
 
           wrapper.appendChild(newCode);
           pre.replaceWith(wrapper);
         });
 
-        // Inline code (but not the ones inside our new block wrappers)
+        // Inline code: remove background, keep border
         tmp.querySelectorAll("code").forEach(c => {
-          if (!c.closest("div[style*='background-color:#f4f4f4']")) {
-            c.style.backgroundColor = "#f0f0f0";
+          if (!c.closest("div[style*='border:1px solid #cccccc']")) {
+            c.style.background = "transparent";
             c.style.padding = "2px 4px";
             c.style.fontFamily = "'Courier New',Consolas,monospace";
             c.style.fontSize = "12px";
             c.style.borderRadius = "2px";
+            c.style.border = "1px solid #ddd";
           }
         });
 
@@ -124,7 +121,6 @@
 
       convertBtn.addEventListener("click", convertMarkdown);
 
-      // Copy rendered HTML (and plain text as a fallback flavor)
       copyBtn.addEventListener("click", async () => {
         const html = preview.innerHTML;
         const plain = preview.innerText;
@@ -167,7 +163,6 @@
         }
       });
 
-      // Download as a .doc
       downloadBtn.addEventListener("click", () => {
         const html = preview.innerHTML;
         const header = `
