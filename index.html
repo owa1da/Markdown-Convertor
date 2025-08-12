@@ -73,6 +73,11 @@
         background: #0056b3;
         transform: translateY(-1px);
       }
+
+      .button-success {
+        background: #28a745 !important;
+        transform: scale(1.02);
+      }
       #preview {
         border: 1px solid #ddd;
         padding: 1rem;
@@ -100,6 +105,30 @@
         border: 1px solid #000; /* Set visible borders */
         padding: 8px; /* Add spacing for better readability */
         text-align: left;
+      }
+
+      /* Code block styling for preview */
+      pre {
+        background: #f4f4f4;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin: 10px 0;
+        font-family: 'Courier New', monospace;
+        white-space: pre-wrap;
+        overflow: auto;
+        border-radius: 4px;
+      }
+
+      code {
+        background: #f4f4f4;
+        padding: 2px 4px;
+        font-family: 'Courier New', monospace;
+        border-radius: 3px;
+      }
+
+      pre code {
+        background: transparent;
+        padding: 0;
       }
     </style>
   </head>
@@ -153,6 +182,16 @@
           '<td style="padding:8px;text-align:left;">'
         );
 
+        // Style code blocks for better Word compatibility
+        htmlContent = htmlContent.replace(
+          /<pre><code>/g,
+          '<pre style="background:#f4f4f4;border:1px solid #ccc;padding:10px;margin:10px 0;font-family:\'Courier New\',monospace;white-space:pre-wrap;overflow:auto;"><code>'
+        );
+        htmlContent = htmlContent.replace(
+          /<code>/g,
+          '<code style="background:#f4f4f4;padding:2px 4px;font-family:\'Courier New\',monospace;border-radius:3px;">'
+        );
+
         // Ensure the preview section displays the modified HTML
         preview.innerHTML = htmlContent;
 
@@ -166,37 +205,53 @@
       // Copy the rendered HTML content to the clipboard using the Clipboard API if available.
       copyBtn.addEventListener("click", async function () {
         const html = preview.innerHTML;
+        const originalText = copyBtn.textContent;
+        
+        // Update button state to show copying
+        copyBtn.textContent = "Copying...";
+        copyBtn.disabled = true;
 
-        // Use the asynchronous Clipboard API if supported.
-        if (navigator.clipboard && navigator.clipboard.write) {
-          try {
+        try {
+          // Use the asynchronous Clipboard API if supported.
+          if (navigator.clipboard && navigator.clipboard.write) {
             const blob = new Blob([html], { type: "text/html" });
             const data = [new ClipboardItem({ "text/html": blob })];
             await navigator.clipboard.write(data);
-            alert("Content copied to clipboard.");
-            return;
-          } catch (err) {
-            console.error("Clipboard API error:", err);
-            // If Clipboard API fails, fall back to execCommand.
-          }
-        }
-
-        // Fallback: Use execCommand for older browsers
-        const range = document.createRange();
-        range.selectNode(preview);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-        try {
-          if (document.execCommand("copy")) {
-            alert("Content copied to clipboard.");
           } else {
-            alert("Unable to copy content.");
+            // Fallback: Use execCommand for older browsers
+            const range = document.createRange();
+            range.selectNode(preview);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            if (!document.execCommand("copy")) {
+              throw new Error("Copy command failed");
+            }
+            selection.removeAllRanges();
           }
+          
+          // Success feedback
+          copyBtn.textContent = "Copied!";
+          copyBtn.classList.add("button-success");
+          
+          // Reset button after 2 seconds
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.classList.remove("button-success");
+            copyBtn.disabled = false;
+          }, 2000);
+          
         } catch (err) {
-          alert("Error during copy: " + err);
+          console.error("Copy error:", err);
+          copyBtn.textContent = "Copy Failed";
+          
+          // Reset button after 2 seconds
+          setTimeout(() => {
+            copyBtn.textContent = originalText;
+            copyBtn.disabled = false;
+          }, 2000);
         }
-        selection.removeAllRanges();
       });
 
       // Download the rendered content as a Word document
